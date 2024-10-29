@@ -7,14 +7,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      chrome:
-        image: selenium/standalone-chrome
-        ports:
-          - 4444:4444
-        options: >-
-          --shm-size 2g
-    
+   
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python 3.12.1
@@ -28,7 +21,15 @@ jobs:
           pip install robotframework
           pip install robotframework-seleniumlibrary
        
-  
+      - name: Download ChromeDriver
+        run: |
+          CHROME_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+          CHROMEDRIVER_URL="https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip"
+          curl -L $CHROMEDRIVER_URL -o chromedriver.zip
+          unzip chromedriver.zip
+          chmod +x chromedriver
+          sudo mv chromedriver /usr/local/bin/
+
       - name: Test with RobotFramework
         run: robot .  
        
