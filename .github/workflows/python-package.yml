@@ -19,7 +19,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install robotframework
           pip install robotframework-seleniumlibrary
-          pip install chromedriver-binary==your_chrome_version
+          driver = webdriver.Chrome()
   
       - name: Test with RobotFramework
         run: robot .  
