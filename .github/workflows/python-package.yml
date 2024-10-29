@@ -19,13 +19,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install robotframework
           pip install robotframework-seleniumlibrary
-          
+          pip install -r requirement.txt
   
       - name: Test with RobotFramework
         run: robot .  
-        uses: joonvena/robotframework-docker-action@v0.1
-        env:
-          BROWSER: chrome
+       
         
       - name: Test Report Generation
         uses: actions/upload-artifact@v4
