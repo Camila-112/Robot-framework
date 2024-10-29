@@ -31,6 +31,14 @@ jobs:
           chmod +x chromedriver
           sudo mv chromedriver /usr/local/bin/
 
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+          sudo apt-get install -y -f  # Install any missing dependencies    
+
       - name: Test with RobotFramework
         run: robot .  
        
