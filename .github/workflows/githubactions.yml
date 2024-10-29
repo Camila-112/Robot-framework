@@ -39,7 +39,4 @@ jobs:
           CHROME_BIN: /usr/bin/chromium-browser
           CHROME_DRIVER: /usr/bin/chromedriver
         run: |
-          # Start Xvfb to run Chrome in headless mode
-          sudo apt-get install -y xvfb
-          Xvfb :99 -ac &
-          robot --outputdir results tests/
+          run: robot .  
