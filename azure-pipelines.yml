@@ -7,7 +7,7 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: -latest
 strategy:
   matrix:
     Python38:
@@ -26,7 +26,7 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    robot -d ./logs -x output-xunit.xml tests
+    robot test.robot -d ./logs -x output-xunit.xml tests
   continueOnError: true
   displayName: 'Run UI Tests'
 

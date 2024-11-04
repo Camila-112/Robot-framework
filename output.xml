@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot generator="Robot 7.1 (Python 3.13.0 on win32)" generated="2024-10-29T14:27:37.866391" rpa="false" schemaversion="5">
-<suite id="s1" name="Robot-framework" source="C:\Users\camila.santos\OneDrive - Valtech\Bureau\Robot-framework">
-<suite id="s1-s1" name="Test" source="C:\Users\camila.santos\OneDrive - Valtech\Bureau\Robot-framework\test.robot">
-<test id="s1-s1-t1" name="Cenário 1: Acessando o site do Robot" line="12">
+<robot generator="Robot 7.1 (Python 3.13.0 on win32)" generated="2024-11-04T15:34:08.371749" rpa="false" schemaversion="5">
+<suite id="s1" name="Test" source="C:\Users\camila.santos\OneDrive - Valtech\Bureau\Robot-framework\test.robot">
+<test id="s1-t1" name="Cenário 1: Acessando o site do Robot" line="12">
 <kw name="Abrir Site">
 <kw name="Open Browser" owner="SeleniumLibrary">
-<msg time="2024-10-29T14:27:40.188612" level="INFO">Opening browser 'chrome' to base url 'https://robotframework.org/'.</msg>
+<msg time="2024-11-04T15:34:09.107773" level="INFO">Opening browser 'chrome' to base url 'https://robotframework.org/'.</msg>
 <arg>https://robotframework.org/</arg>
 <arg>chrome</arg>
 <doc>Opens a new browser instance to the optional ``url``.</doc>
-<status status="PASS" start="2024-10-29T14:27:40.188388" elapsed="13.917974"/>
+<status status="PASS" start="2024-11-04T15:34:09.107553" elapsed="21.669908"/>
 </kw>
-<status status="PASS" start="2024-10-29T14:27:40.187694" elapsed="13.918934"/>
+<status status="PASS" start="2024-11-04T15:34:09.107068" elapsed="21.670572"/>
 </kw>
-<status status="PASS" start="2024-10-29T14:27:40.186890" elapsed="13.920215"/>
+<status status="PASS" start="2024-11-04T15:34:09.106555" elapsed="21.671530"/>
 </test>
-<status status="PASS" start="2024-10-29T14:27:38.050286" elapsed="16.059014"/>
-</suite>
-<status status="PASS" start="2024-10-29T14:27:37.872141" elapsed="16.239404"/>
+<status status="PASS" start="2024-11-04T15:34:08.373917" elapsed="22.405688"/>
 </suite>
 <statistics>
 <total>
@@ -26,8 +23,7 @@
 <tag>
 </tag>
 <suite>
-<stat pass="1" fail="0" skip="0" id="s1" name="Robot-framework">Robot-framework</stat>
-<stat pass="1" fail="0" skip="0" id="s1-s1" name="Test">Robot-framework.Test</stat>
+<stat pass="1" fail="0" skip="0" id="s1" name="Test">Test</stat>
 </suite>
 </statistics>
 <errors>
