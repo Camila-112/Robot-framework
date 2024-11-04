@@ -26,12 +26,7 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-    robot test.robot -d ./logs -x output-xunit.xml tests
+    robot test.robot 
   continueOnError: true
   displayName: 'Run UI Tests'
 
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: 'logs/output-xunit.xml'
-  displayName: 'Publish Test Results'
