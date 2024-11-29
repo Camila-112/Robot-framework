@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Install Chrome and dependencies
+      # Instalar dependências do Chrome
       - name: Install Chrome dependencies
         run: |
           sudo apt-get update
@@ -37,33 +37,37 @@ jobs:
           sudo apt-get install -y libdbus-1-3 libgdk-pixbuf2.0-0 libnspr4 libnss3 libxss1
           sudo apt-get install -y libgbm1
           
-          # Install Google Chrome
+          # Instalar o Google Chrome
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg -i google-chrome-stable_current_amd64.deb
           sudo apt-get install -f
 
-      # Install Chromedriver
-      - name: Install Chromedriver
+      # Instalar o ChromeDriver correto
+      - name: Install correct ChromeDriver version
         run: |
+          # Obtendo a versão do Chrome
           CHROME_VERSION=$(google-chrome --version | sed 's/[^0-9]*\([0-9]*\.[0-9]*\.[0-9]*\)/\1/')
-          wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+          
+          # Baixando a versão do ChromeDriver correspondente
+          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
+          wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
 
-      # Install dependencies
+      # Instalar dependências do Python
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install robotframework selenium robotframework-seleniumlibrary
 
-      # Run Robot Framework Tests
+      # Executar os testes do Robot Framework
       - name: Run Robot Framework Tests
         run: |
           robot --output output.xml --report report.html --log log.html test.robot
 
-      # Upload the Robot Framework Reports as Artifacts
+      # Fazer upload dos relatórios como artefatos
       - name: Upload Robot Framework Reports
         uses: actions/upload-artifact@v3
         with:
