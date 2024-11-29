@@ -63,8 +63,3 @@ jobs:
     
         run: echo "ROBOT_RC=$?" >> "$GITHUB_ENV"
  
---------end of file
-In Robot framework, i  init the webdriver like so:
-       SeleniumLibrary.Open Browser
-        ...    ${url}
-        ...    browser=headlesschrome
