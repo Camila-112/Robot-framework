@@ -1,59 +1,64 @@
 name: CI 2
-
 on:
+  # Triggers the workflow on push events but only for the "main" branch - change to your branchname
   push:
     branches: [ "main" ]
+  
   workflow_dispatch:
-
+ 
 jobs:
   build:
+    # run in parallel on three OS (as defined below in the marix startegy)
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120  # Aumentando o tempo limite para 2 horas
-
+    
     strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
+        
+        matrix:
+            os: [ubuntu-latest, windows-latest,macos-latest]
+            
+    
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
-
       - name: Setup Python
         uses: actions/setup-python@v5.0.0
         with:
           python-version: 3.12.2
-
-      - name: Install dependencies
+ 
+      - name: Setup Workspace
         run: |
           pip install -r requirements.txt
-          pip install robotframework selenium robotframework-seleniumlibrary
-          echo "Dependencies installed"
-
-      # Instalação do ChromeDriver e Google Chrome no Ubuntu
-      - name: Install Google Chrome and ChromeDriver (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      # windows and linux/macos treat paths and env variables differently , so best way i found was this:
+      - name: set pythonpath else
+        run : |
+          echo "PYTHONPATH=./resources:./variables:./libraries" >> $GITHUB_ENV
+      - name: set pythonpath window
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run : |
+          "PYTHONPATH=./resources;./variables;./libraries" >> $env:GITHUB_ENV
+ 
+      
+      - name: Run Tests
+        
         run: |
-          set -x  # Habilitando o modo de depuração
-          sudo apt-get update
-          sudo apt-get install -y wget curl unzip
-          sudo apt-get install -y google-chrome-stable
-          CHROME_VERSION=$(google-chrome --version | sed 's/[^0-9]*\([0-9]*\.[0-9]*\.[0-9]*\)/\1/')
-          DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
-          wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/chromedriver
-          sudo chmod +x /usr/local/bin/chromedriver
-          echo "Google Chrome and ChromeDriver installed"
-
-      # Run tests with Robot Framework
-      - name: Run Robot Framework Tests
-        run: |
-          robot --outputdir $GITHUB_WORKSPACE/results test.robot
-          echo "Robot Framework tests completed"
-
-      # Upload Test Reports
+          robot  --outputdir $GITHUB_WORKSPACE/results test.robot
+      
+      # same a above, need to treat windows and linux/macos
+      - name: Upload Test Report Windows
+        if: matrix.os == 'windows-latest' && (success() || failure())
+        
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: ${{ matrix.os }}-rf-results
+          path: D:\results\
       - name: Upload Test Report
+        if: matrix.os != 'windows-latest' && (success() || failure())
         uses: actions/upload-artifact@v4.3.1
         with:
           name: ${{ matrix.os }}-rf-results
           path: ./results/
+ 
+      - name: Run Robot Framework tests and generate report
+    
+        run: echo "ROBOT_RC=$?" >> "$GITHUB_ENV"

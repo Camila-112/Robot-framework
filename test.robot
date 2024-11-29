@@ -6,7 +6,7 @@ Library  SeleniumLibrary
 
 ** Keywords **
 Abrir Site
-    Open Browser  https://robotframework.org/  chrome
+    Open Browser  https://robotframework.org/  headlesschrome
 
 ** Test Cases **
 Cenário 1: Acessando o site do Robot
