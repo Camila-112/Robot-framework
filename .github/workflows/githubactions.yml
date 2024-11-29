@@ -8,94 +8,52 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120  # Aumentando o tempo limite para 2 horas
 
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Python
       - name: Setup Python
         uses: actions/setup-python@v5.0.0
         with:
           python-version: 3.12.2
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install robotframework selenium robotframework-seleniumlibrary
+          echo "Dependencies installed"
 
-      # Step 4: Install Google Chrome and ChromeDriver (Ubuntu)
+      # Instalação do ChromeDriver e Google Chrome no Ubuntu
       - name: Install Google Chrome and ChromeDriver (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
+          set -x  # Habilitando o modo de depuração
           sudo apt-get update
           sudo apt-get install -y wget curl unzip
           sudo apt-get install -y google-chrome-stable
-          
-          # Get Chrome version
           CHROME_VERSION=$(google-chrome --version | sed 's/[^0-9]*\([0-9]*\.[0-9]*\.[0-9]*\)/\1/')
-          
-          # Get ChromeDriver version compatible with the Chrome version
           DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
-          
-          # Download and install ChromeDriver
           wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
+          echo "Google Chrome and ChromeDriver installed"
 
-      # Step 5: Install Google Chrome and ChromeDriver (Windows)
-      - name: Install Google Chrome and ChromeDriver (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          # Install Google Chrome on Windows if not already installed
-          $chrome_version = (google-chrome --version).split(" ")[2]
-          $driver_version = Invoke-RestMethod "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$chrome_version"
-          Invoke-WebRequest "https://chromedriver.storage.googleapis.com/$driver_version/chromedriver_win32.zip" -OutFile "chromedriver.zip"
-          Expand-Archive -Path "chromedriver.zip" -DestinationPath "$env:USERPROFILE"
-          Move-Item "$env:USERPROFILE\chromedriver.exe" "$env:ProgramFiles\chromedriver.exe"
-          Remove-Item "chromedriver.zip"
-
-      # Step 6: Set PYTHONPATH for all systems
-      - name: Set PYTHONPATH (Linux/macOS/Windows)
-        run: |
-          echo "PYTHONPATH=./resources:./variables:./libraries" >> $GITHUB_ENV
-        if: matrix.os != 'windows-latest'
-
-      - name: Set PYTHONPATH (Windows)
-        shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: |
-          "PYTHONPATH=./resources;./variables;./libraries" >> $env:GITHUB_ENV
-
-      # Step 7: Run Robot Framework Tests
-      - name: Run Tests
+      # Run tests with Robot Framework
+      - name: Run Robot Framework Tests
         run: |
           robot --outputdir $GITHUB_WORKSPACE/results test.robot
+          echo "Robot Framework tests completed"
 
-      # Step 8: Upload Test Results (Windows)
-      - name: Upload Test Report (Windows)
-        if: matrix.os == 'windows-latest' && (success() || failure())
-        uses: actions/upload-artifact@v4.3.1
-        with:
-          name: ${{ matrix.os }}-rf-results
-          path: D:\results\
-
-      # Step 9: Upload Test Results (Linux/macOS)
-      - name: Upload Test Report (Linux/macOS)
-        if: matrix.os != 'windows-latest' && (success() || failure())
+      # Upload Test Reports
+      - name: Upload Test Report
         uses: actions/upload-artifact@v4.3.1
         with:
           name: ${{ matrix.os }}-rf-results
           path: ./results/
-
-      # Step 10: Set Robot Framework exit code
-      - name: Set Robot Framework exit code
-        run: echo "ROBOT_RC=$?" >> "$GITHUB_ENV"
