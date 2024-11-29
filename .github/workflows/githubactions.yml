@@ -27,17 +27,25 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Instalar dependências do Chrome (Chrome e ChromeDriver)
-      - name: Install Chrome and dependencies
+      # Instalar Google Chrome e ChromeDriver
+      - name: Install Google Chrome and ChromeDriver
         run: |
-          # Baixar e instalar o Google Chrome
+          # Adicionar repositórios do Google Chrome
           sudo apt-get update
-          sudo apt-get install -y wget curl
+          sudo apt-get install -y wget curl unzip
+
+          # Instalar o Google Chrome (estável)
           sudo apt-get install -y google-chrome-stable
 
-          # Baixar e instalar o ChromeDriver
+          # Obter a versão do Google Chrome
           CHROME_VERSION=$(google-chrome --version | sed 's/[^0-9]*\([0-9]*\.[0-9]*\.[0-9]*\)/\1/')
+          echo "Chrome version: $CHROME_VERSION"
+
+          # Baixar a versão correta do ChromeDriver
           DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
+          echo "ChromeDriver version: $DRIVER_VERSION"
+
+          # Baixar e instalar o ChromeDriver
           wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/chromedriver
