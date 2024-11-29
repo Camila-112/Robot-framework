@@ -1,74 +1,101 @@
-name: Run Robot Framework Tests with Selenium
+name: CI 2
 
 on:
+  # Trigger the workflow on push events for the "main" branch
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      # Checkout do código
-      - name: Checkout code
-        uses: actions/checkout@v2
+      # Step 1: Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      # Configurar Python
-      - name: Set up Python $(matrix.python-version)
-        uses: actions/setup-python@v4
+      # Step 2: Set up Python
+      - name: Setup Python
+        uses: actions/setup-python@v5.0.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.12.2
 
-      # Instalar Google Chrome e ChromeDriver
-      - name: Install Google Chrome and ChromeDriver
+      # Step 3: Install dependencies
+      - name: Setup Workspace
         run: |
-          # Adicionar repositórios do Google Chrome
+          pip install -r requirements.txt
+          pip install robotframework selenium robotframework-seleniumlibrary
+
+      # Step 4: Set PYTHONPATH for all systems
+      - name: Set PYTHONPATH (Linux/macOS/Windows)
+        run: |
+          echo "PYTHONPATH=./resources:./variables:./libraries" >> $GITHUB_ENV
+        if: matrix.os != 'windows-latest'
+
+      - name: Set PYTHONPATH (Windows)
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run: |
+          "PYTHONPATH=./resources;./variables;./libraries" >> $env:GITHUB_ENV
+
+      # Step 5: Install Google Chrome and ChromeDriver (Ubuntu)
+      - name: Install Google Chrome and ChromeDriver (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
           sudo apt-get update
           sudo apt-get install -y wget curl unzip
-
-          # Instalar o Google Chrome (estável)
           sudo apt-get install -y google-chrome-stable
-
-          # Obter a versão do Google Chrome
+          
+          # Get Chrome version
           CHROME_VERSION=$(google-chrome --version | sed 's/[^0-9]*\([0-9]*\.[0-9]*\.[0-9]*\)/\1/')
-          echo "Chrome version: $CHROME_VERSION"
-
-          # Baixar a versão correta do ChromeDriver
+          
+          # Get ChromeDriver version compatible with the Chrome version
           DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
-          echo "ChromeDriver version: $DRIVER_VERSION"
-
-          # Baixar e instalar o ChromeDriver
+          
+          # Download and install ChromeDriver
           wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
 
-      # Instalar dependências do Python
-      - name: Install Python dependencies
+      # Step 6: Install ChromeDriver (Windows)
+      - name: Install ChromeDriver (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install robotframework selenium robotframework-seleniumlibrary
+          $chrome_version = (google-chrome --version).split(" ")[2]
+          $driver_version = Invoke-RestMethod "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$chrome_version"
+          Invoke-WebRequest "https://chromedriver.storage.googleapis.com/$driver_version/chromedriver_win32.zip" -OutFile "chromedriver.zip"
+          Expand-Archive -Path "chromedriver.zip" -DestinationPath "$env:USERPROFILE"
+          Move-Item "$env:USERPROFILE\chromedriver.exe" "$env:ProgramFiles\chromedriver.exe"
+          Remove-Item "chromedriver.zip"
 
-      # Executar os testes do Robot Framework
-      - name: Run Robot Framework Tests
+      # Step 7: Run Robot Framework Tests
+      - name: Run Tests
         run: |
-          robot --output output.xml --report report.html --log log.html test.robot
+          robot --outputdir $GITHUB_WORKSPACE/results test.robot
 
-      # Fazer upload dos relatórios como artefatos
-      - name: Upload Robot Framework Reports
-        uses: actions/upload-artifact@v3
+      # Step 8: Upload Test Results (Windows)
+      - name: Upload Test Report (Windows)
+        if: matrix.os == 'windows-latest' && (success() || failure())
+        uses: actions/upload-artifact@v4.3.1
         with:
-          name: robot-reports
-          path: |
-            output.xml
-            report.html
-            log.html
+          name: ${{ matrix.os }}-rf-results
+          path: D:\results\
+
+      # Step 9: Upload Test Results (Linux/macOS)
+      - name: Upload Test Report (Linux/macOS)
+        if: matrix.os != 'windows-latest' && (success() || failure())
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: ${{ matrix.os }}-rf-results
+          path: ./results/
+
+      # Step 10: Set Robot Framework exit code
+      - name: Set Robot Framework exit code
+        run: echo "ROBOT_RC=$?" >> "$GITHUB_ENV"
