@@ -1,51 +1,70 @@
-name: Robot Framework - Python
+name: CI
 on:
+  # Triggers the workflow on push events but only for the "main" branch - change to your branchname
   push:
     branches: [ "main" ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-   
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.12.1
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.12.1
   
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install robotframework
-          pip install selenium
-          pip install robotframework-seleniumlibrary
-       
-      - name: Download ChromeDriver
-        run: |
-          CHROME_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
-          CHROMEDRIVER_URL="https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip"
-          curl -L $CHROMEDRIVER_URL -o chromedriver.zip
-          unzip chromedriver.zip
-          chmod +x chromedriver
-          sudo mv chromedriver /usr/local/bin/
-
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
-          sudo apt-get install -y -f  # Install any missing dependencies    
-
-      - name: Test with RobotFramework
-        run: robot .  
-       
+  workflow_dispatch:
+ 
+jobs:
+  build:
+    # run in parallel on three OS (as defined below in the marix startegy)
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
         
-      - name: Test Report Generation
-        uses: actions/upload-artifact@v4
-        if: success() || failure()
+        matrix:
+            os: [ubuntu-latest, windows-latest,macos-latest]
+            
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v5.0.0
         with:
-          name: Report                # Name of the folder
-          path: report.html           # Path to test results
+          python-version: 3.12.2
+ 
+      - name: Setup Workspace
+        run: |
+          pip install -r requirements.txt
+      # windows and linux/macos treat paths and env variables differently , so best way i found was this:
+      - name: set pythonpath else
+        run : |
+          echo "PYTHONPATH=./resources:./variables:./libraries" >> $GITHUB_ENV
+      - name: set pythonpath window
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run : |
+          "PYTHONPATH=./resources;./variables;./libraries" >> $env:GITHUB_ENV
+ 
+      
+      - name: Run Tests
+        
+        run: |
+          robot  --outputdir $GITHUB_WORKSPACE/results test.robot
+      
+      # same a above, need to treat windows and linux/macos
+      - name: Upload Test Report Windows
+        if: matrix.os == 'windows-latest' && (success() || failure())
+        
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: ${{ matrix.os }}-rf-results
+          path: D:\results\
+      - name: Upload Test Report
+        if: matrix.os != 'windows-latest' && (success() || failure())
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: ${{ matrix.os }}-rf-results
+          path: ./results/
+ 
+      - name: Run Robot Framework tests and generate report
+    
+        run: echo "ROBOT_RC=$?" >> "$GITHUB_ENV"
+ 
+--------end of file
+In Robot framework, i  init the webdriver like so:
+       SeleniumLibrary.Open Browser
+        ...    ${url}
+        ...    browser=headlesschrome
