@@ -42,14 +42,22 @@ jobs:
           sudo dpkg -i google-chrome-stable_current_amd64.deb
           sudo apt-get install -f
 
-      # Instalar o ChromeDriver correto
+       # Instalar o ChromeDriver correto
       - name: Install correct ChromeDriver version
         run: |
           # Obtendo a versão do Chrome
           CHROME_VERSION=$(google-chrome --version | sed 's/[^0-9]*\([0-9]*\.[0-9]*\.[0-9]*\)/\1/')
           
-          # Baixando a versão do ChromeDriver correspondente
+          # Verificar se a versão foi capturada corretamente
+          echo "Versão do Chrome: $CHROME_VERSION"
+          
+          # Baixando a versão correta do ChromeDriver compatível com o Chrome
           DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION)
+          
+          # Verificar se a versão do ChromeDriver foi recuperada com sucesso
+          echo "Versão do ChromeDriver: $DRIVER_VERSION"
+          
+          # Baixando o ChromeDriver
           wget https://chromedriver.storage.googleapis.com/$DRIVER_VERSION/chromedriver_linux64.zip
           unzip chromedriver_linux64.zip
           sudo mv chromedriver /usr/local/bin/chromedriver
